@@ -1,0 +1,43 @@
+#jefferson2026
+#7-Zip Installer all archs
+#choose version
+$Version = "26.01"
+
+#find what type to install
+$arch = if ([Environment]::Is64BitOperatingSystem) {
+    if ([Environment]::GetEnvironmentVariable("PROCESSOR_ARCHITECTURE") -eq "ARM64") {
+        "arm64"
+    } else {
+        "x64"
+    }
+} else {
+    "x86"
+}
+
+#match to arch
+switch ($arch) {
+    "x64"    { $File = "7z2601-x64.exe" }
+    "arm64"  { $File = "7z2601-arm64.exe" }
+    default  { $File = "7z2601.exe" }
+}
+
+#CHECK THIS!!!!! IF FAILED THIS IS NICE START
+$Url  = "https://github.com/ip7z/7zip/releases/download/$Version/$File"
+$Temp = Join-Path $env:TEMP $File
+
+#Write-Host "Downloading 7-Zip $Version for $arch"
+try {
+    if (Get-Command Invoke-WebRequest -ErrorAction SilentlyContinue) {
+        Invoke-WebRequest $Url -OutFile $Temp
+    } else {
+        $wc = New-Object System.Net.WebClient
+        $wc.DownloadFile($Url, $Temp)
+    }
+
+    #Write-Host "Installing 7-Zip..."
+    Start-Process $Temp -ArgumentList "/S" -Wait
+    #Write-Host "done"
+}
+finally {
+    if (Test-Path $Temp) { Remove-Item $Temp -Force }
+}
